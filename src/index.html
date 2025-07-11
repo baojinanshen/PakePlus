@@ -1,32 +1,1848 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" href="styles.css" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus App</title>
-        <script type="module" src="/main.js" defer></script>
-    </head>
-
-    <body>
-        <main class="container">
-            <h1>Welcome to PakePlus</h1>
-            <form class="row" id="greet-form">
-                <input id="inputValue" placeholder="Enter a something..." />
-            </form>
-            <div class="resultBox">
-                <span>result: </span>
-                <span id="result"></span>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>传输设备组环拓扑自动生成工具</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/pptxgenjs@3.10.0/dist/pptxgen.bundle.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .developer {
+            font-size: 1rem;
+            background: rgba(255,255,255,0.1);
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a0d2ff;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            display: flex;
+            align-items: center;
+        }
+        
+        .upload-area {
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(0,0,0,0.1);
+        }
+        
+        .upload-area:hover {
+            border-color: #4fc3f7;
+            background: rgba(79, 195, 247, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            color: #4fc3f7;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+        
+        .upload-hint {
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #2196f3, #21cbf3);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn:disabled {
+            background: linear-gradient(to right, #616161, #9e9e9e);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-generate {
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+        }
+        
+        .btn-generate:hover {
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .preview-box {
+            width: 100%;
+        }
+        
+        .preview-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #ff9800;
+        }
+        
+        .table-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: auto;
+            max-height: 300px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(30, 30, 40, 0.7);
+        }
+        
+        th {
+            background: rgba(33, 150, 243, 0.3);
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        tr:nth-child(even) {
+            background: rgba(255,255,255,0.03);
+        }
+        
+        tr:hover {
+            background: rgba(79, 195, 247, 0.1);
+        }
+        
+        .topology-preview-container {
+            position: relative;
+            height: 500px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .topology-preview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-width: 300px;
+            z-index: 20;
+        }
+        
+        .legend-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex: 1;
+            min-width: 90px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        .topology-node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #000;
+            z-index: 10;
+            background-size: 50%;
+            background-position: center top 10px;
+            background-repeat: no-repeat;
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        
+        .node-label {
+            position: absolute;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 15;
+            background: rgba(255,255,255,0.95);
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            word-wrap: break-word;
+            max-width: 150px;
+            text-align: center;
+            line-height: 1.3;
+            color: #000;
+            word-break: break-word;
+        }
+        
+        .topology-line {
+            position: absolute;
+            height: 4px;
+            transform-origin: left center;
+            z-index: 5;
+        }
+        
+        .topology-distance {
+            position: absolute;
+            background: transparent;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            z-index: 15;
+            white-space: nowrap;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        
+        .instructions {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .instructions h3 {
+            color: #ff9800;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ul {
+            padding-left: 25px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .instructions code {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            display: block;
+        }
+        
+        .status.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            display: block;
+        }
+        
+        .status.loading {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            display: block;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #aaa;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .legend-image {
+            width: 24px;
+            height: 24px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .ring-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .ring-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .ring-btn.active {
+            background: #4fc3f7;
+            color: #1a2a6c;
+            border-color: #4fc3f7;
+        }
+        
+        .icon-reload {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            z-index: 100;
+        }
+        
+        .icon-reload:hover {
+            background: rgba(79, 195, 247, 0.3);
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 100;
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .zoom-btn:hover {
+            background: rgba(79, 195, 247, 0.8);
+        }
+        
+        .zoom-reset {
+            background: rgba(76, 175, 80, 0.6);
+        }
+        
+        .zoom-reset:hover {
+            background: rgba(76, 175, 80, 0.8);
+        }
+        
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .legend {
+                width: 90%;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>传输设备组环拓扑自动生成工具</h1>
+            <p class="subtitle">上传跳纤表Excel文件，自动生成专业的组环拓扑PPT演示文稿</p>
+            <p class="developer">开发者：微信公众号：软件帮Pro</p>
+        </header>
+        
+        <main>
+            <div class="card">
+                <h2 class="card-title">上传跳纤表</h2>
+                <div class="upload-area" id="dropArea">
+                    <div class="upload-icon">📊</div>
+                    <p class="upload-text">拖拽Excel文件到此处或点击上传</p>
+                    <p class="upload-hint">支持 .xlsx 或 .xls 格式的跳纤表文件</p>
+                    <input type="file" id="fileInput" accept=".xlsx, .xls">
+                </div>
+                
+                <div class="input-group">
+                    <button class="btn" id="sampleBtn">
+                        <i>📥</i> 下载示例文件
+                    </button>
+                    <button class="btn" id="generateBtn" disabled>
+                        <i>⚡</i> 生成拓扑PPT
+                    </button>
+                </div>
+                
+                <div id="statusMessage" class="status"></div>
             </div>
-            <div class="invokeBox">
-                <button id="openUrl">open_url_browser</button>
-                <button id="openUrlNew">open_url_new</button>
-                <button id="runCommand">run_command</button>
-                <button id="downloadFile">download_file</button>
-                <button id="getExeDir">get_exe_dir</button>
-                <button id="getEnvVar">get_env_var</button>
-                <button id="findPort">find_port</button>
+            
+            <div class="preview-section">
+                <div class="preview-box">
+                    <h3 class="preview-title">表格数据预览</h3>
+                    <div class="table-container">
+                        <table id="dataTable">
+                            <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th>接入环</th>
+                                    <th>起点</th>
+                                    <th>终点</th>
+                                    <th>光缆属性</th>
+                                    <th>光缆距离</th>
+                                    <th>新增设备</th>
+                                    <th>原有设备</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" style="text-align: center; color: #aaa;">
+                                        上传Excel文件后显示数据预览
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="preview-box">
+                    <h3 class="preview-title">拓扑图预览</h3>
+                    <div class="ring-selector" id="ringSelector" style="display:none;">
+                        <!-- 环选择按钮将动态生成 -->
+                    </div>
+                    <div class="topology-preview-container" id="topologyContainer">
+                        <div class="topology-preview" id="topologyPreview">
+                            <div style="color: #aaa; text-align: center; padding-top: 50px;">
+                                拓扑图将在生成后显示在此处<br>
+                                <small>优化标签位置，与PPT效果一致</small>
+                            </div>
+                        </div>
+                        
+                        <!-- 图例 - 固定位置 -->
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-image" style="background-image: url('icons/server.png');"></div>
+                                <span>机房</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-image" style="background-image: url('icons/network-device.png');"></div>
+                                <span>原有设备</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-image" style="background-image: url('icons/new-device.png');"></div>
+                                <span>新增设备</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-image" style="background-image: url('icons/fiber-point.png');"></div>
+                                <span>跳纤点</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #4CAF50;"></div>
+                                <span>原有光缆</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #F44336;"></div>
+                                <span>新建光缆</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 缩放控制 -->
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" id="zoomInBtn">+</button>
+                            <button class="zoom-btn" id="zoomOutBtn">-</button>
+                            <button class="zoom-btn zoom-reset" id="resetViewBtn">↺</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h3>使用说明</h3>
+                <ul>
+                    <li>上传的Excel文件必须包含以下列：<code>序号</code>, <code>接入环</code>, <code>起点</code>, <code>终点</code>, <code>光缆属性</code>, <code>光缆距离</code>, <code>新增设备站点</code>, <code>原有设备站点</code></li>
+                    <li>系统会自动识别多个组环方案（每个方案之间用空行分隔）</li>
+                    <li>生成的PPT文件将包含多个页面，每个组环方案一个页面</li>
+                    <li>每个页面左下角会自动添加图例说明</li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </main>
-    </body>
+        
+        <footer>
+            <p>传输设备组环拓扑自动生成工具 v1.0 | 微信公众号：软件帮Pro</p>
+            <p>© 2025 网络拓扑自动化工具 | 数据安全可靠</p>
+        </footer>
+    </div>
+
+    <script>
+        // 页面元素
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('dropArea');
+        const generateBtn = document.getElementById('generateBtn');
+        const dataTable = document.getElementById('dataTable');
+        const topologyPreview = document.getElementById('topologyPreview');
+        const sampleBtn = document.getElementById('sampleBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const ringSelector = document.getElementById('ringSelector');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetViewBtn = document.getElementById('resetViewBtn');
+        const topologyContainer = document.getElementById('topologyContainer');
+        
+        // 当前解析的数据
+        let ringData = [];
+        let currentRingIndex = 0;
+        
+        // 图标URL映射 - 使用本地路径
+        const iconUrls = {
+            '机房': 'icons/server.png',
+            '原有设备': 'icons/network-device.png',
+            '新增设备': 'icons/new-device.png',
+            '跳纤点': 'icons/fiber-point.png'
+        };
+        
+        // 存储所有图标的Base64数据
+        const iconBase64Data = {
+            '机房': null,
+            '原有设备': null,
+            '新增设备': null,
+            '跳纤点': null
+        };
+        
+        // 视图状态
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isDragging = false;
+        let startX, startY;
+        
+        // 初始化时加载所有图标
+        loadAllIcons();
+        
+        // 设置视图变换
+        function setViewTransform() {
+            topologyPreview.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+        }
+        
+        // 初始化视图控制
+        function initViewControls() {
+            zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.2, 3);
+                setViewTransform();
+            });
+            
+            zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale * 0.8, 0.5);
+                setViewTransform();
+            });
+            
+            resetViewBtn.addEventListener('click', () => {
+                scale = 1;
+                offsetX = 0;
+                offsetY = 0;
+                setViewTransform();
+            });
+            
+            // 拖拽平移
+            topologyContainer.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('zoom-btn') || 
+                    e.target.closest('.legend')) return;
+                
+                isDragging = true;
+                startX = e.clientX - offsetX;
+                startY = e.clientY - offsetY;
+                topologyContainer.style.cursor = 'grabbing';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                offsetX = e.clientX - startX;
+                offsetY = e.clientY - startY;
+                setViewTransform();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                topologyContainer.style.cursor = 'grab';
+            });
+            
+            // 触摸事件支持
+            topologyContainer.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) return;
+                e.preventDefault();
+                
+                isDragging = true;
+                startX = e.touches[0].clientX - offsetX;
+                startY = e.touches[0].clientY - offsetY;
+                topologyContainer.style.cursor = 'grabbing';
+            });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length !== 1) return;
+                e.preventDefault();
+                
+                offsetX = e.touches[0].clientX - startX;
+                offsetY = e.touches[0].clientY - startY;
+                setViewTransform();
+            });
+            
+            document.addEventListener('touchend', () => {
+                isDragging = false;
+                topologyContainer.style.cursor = 'grab';
+            });
+        }
+        
+        initViewControls();
+        
+        // 处理文件拖放
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.style.borderColor = '#4fc3f7';
+            dropArea.style.backgroundColor = 'rgba(79, 195, 247, 0.1)';
+        }
+        
+        function unhighlight() {
+            dropArea.style.borderColor = 'rgba(255,255,255,0.3)';
+            dropArea.style.backgroundColor = 'rgba(0,0,0,0.1)';
+        }
+        
+        // 处理文件拖放
+        dropArea.addEventListener('drop', handleDrop, false);
+        dropArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            handleFiles(files);
+        }
+        
+        function handleFileSelect() {
+            handleFiles(this.files);
+        }
+        
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const file = files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    
+                    // 获取第一个工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // 转换为JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    
+                    // 解析数据
+                    parseData(jsonData);
+                    
+                    // 启用生成按钮
+                    generateBtn.disabled = false;
+                    
+                    showStatus("文件解析成功！准备生成PPT", "success");
+                    
+                } catch (error) {
+                    console.error('Error processing Excel file:', error);
+                    showStatus("处理Excel文件时出错: " + error.message, "error");
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // 加载所有图标并转换为Base64
+        function loadAllIcons() {
+            showStatus("正在加载图标资源...", "loading");
+            
+            const iconTypes = Object.keys(iconUrls);
+            let loadedCount = 0;
+            
+            iconTypes.forEach(type => {
+                const url = iconUrls[type];
+                loadIconWithRetry(type, url, 3);
+            });
+        }
+        
+        // 带重试机制的图标加载
+        function loadIconWithRetry(type, url, retries) {
+            getBase64FromImageUrl(url)
+                .then(base64 => {
+                    iconBase64Data[type] = base64;
+                    loadedCount++;
+                    
+                    if (loadedCount === Object.keys(iconUrls).length) {
+                        showStatus("所有图标资源已加载完成", "success");
+                        setTimeout(() => {
+                            statusMessage.style.display = "none";
+                        }, 2000);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error loading icon ${type}:`, error);
+                    if (retries > 0) {
+                        showStatus(`图标加载失败，正在重试 (${4-retries}/3)`, "loading");
+                        setTimeout(() => {
+                            loadIconWithRetry(type, url, retries - 1);
+                        }, 1000);
+                    } else {
+                        showStatus(`图标 ${type} 加载失败，请刷新页面重试`, "error");
+                        createIconReloadButton();
+                    }
+                });
+        }
+        
+        // 创建图标重载按钮
+        function createIconReloadButton() {
+            const reloadBtn = document.createElement('button');
+            reloadBtn.className = 'icon-reload';
+            reloadBtn.textContent = '重新加载图标';
+            reloadBtn.onclick = () => {
+                reloadBtn.remove();
+                loadAllIcons();
+            };
+            document.body.appendChild(reloadBtn);
+        }
+        
+        // 从URL获取图片的Base64编码
+        function getBase64FromImageUrl(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.height = img.naturalHeight;
+                    canvas.width = img.naturalWidth;
+                    ctx.drawImage(img, 0, 0);
+                    const dataURL = canvas.toDataURL('image/png');
+                    resolve(dataURL);
+                };
+                img.onerror = (e) => {
+                    console.error('Image load error:', e);
+                    reject(new Error('Failed to load image: ' + url));
+                };
+                img.src = url;
+            });
+        }
+        
+        // 解析Excel数据
+        function parseData(jsonData) {
+            ringData = [];
+            
+            // 查找标题行
+            let headerRowIndex = -1;
+            for (let i = 0; i < jsonData.length; i++) {
+                if (jsonData[i].length > 0 && 
+                    (jsonData[i][0] === '序号' || jsonData[i][0] === 'A')) {
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+            
+            if (headerRowIndex === -1) {
+                showStatus("未找到有效的标题行", "error");
+                return;
+            }
+            
+            // 提取数据
+            let currentRing = null;
+            
+            for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                
+                // 跳过空行
+                if (row.length === 0 || row.every(cell => cell === null || cell === '')) {
+                    if (currentRing && currentRing.segments.length > 0) {
+                        ringData.push(currentRing);
+                    }
+                    currentRing = null;
+                    continue;
+                }
+                
+                // 解析有效行
+                const segment = {
+                    id: row[0],
+                    ringName: row[1],
+                    region: row[2],
+                    start: row[3],
+                    end: row[4],
+                    cableType: row[5],
+                    coreCount: row[6],
+                    distance: row[7],
+                    room1: row[8],
+                    room2: row[9],
+                    route: row[10],
+                    newDevice: row[11],
+                    existingDevice: row[12] // 新增原有设备站点列
+                };
+                
+                // 新环开始
+                if (segment.ringName) {
+                    if (currentRing && currentRing.segments.length > 0) {
+                        ringData.push(currentRing);
+                    }
+                    currentRing = {
+                        name: segment.ringName,
+                        region: segment.region,
+                        room1: segment.room1,
+                        room2: segment.room2,
+                        segments: [segment],
+                        roomNodes: [],
+                        newDeviceNodes: [],
+                        existingDeviceNodes: [], // 新增原有设备节点数组
+                        routeNodes: segment.route ? segment.route.split('-') : []
+                    };
+                    
+                    // 添加机房节点
+                    if (segment.room1 && !currentRing.roomNodes.includes(segment.room1)) {
+                        currentRing.roomNodes.push(segment.room1);
+                    }
+                    if (segment.room2 && !currentRing.roomNodes.includes(segment.room2)) {
+                        currentRing.roomNodes.push(segment.room2);
+                    }
+                    
+                    // 添加新增设备节点
+                    if (segment.newDevice && !currentRing.newDeviceNodes.includes(segment.newDevice)) {
+                        currentRing.newDeviceNodes.push(segment.newDevice);
+                    }
+                    
+                    // 添加原有设备节点
+                    if (segment.existingDevice && !currentRing.existingDeviceNodes.includes(segment.existingDevice)) {
+                        currentRing.existingDeviceNodes.push(segment.existingDevice);
+                    }
+                } else if (currentRing) {
+                    currentRing.segments.push(segment);
+                    
+                    // 添加机房节点
+                    if (segment.room1 && !currentRing.roomNodes.includes(segment.room1)) {
+                        currentRing.roomNodes.push(segment.room1);
+                    }
+                    if (segment.room2 && !currentRing.roomNodes.includes(segment.room2)) {
+                        currentRing.roomNodes.push(segment.room2);
+                    }
+                    
+                    // 添加新增设备节点
+                    if (segment.newDevice && !currentRing.newDeviceNodes.includes(segment.newDevice)) {
+                        currentRing.newDeviceNodes.push(segment.newDevice);
+                    }
+                    
+                    // 添加原有设备节点
+                    if (segment.existingDevice && !currentRing.existingDeviceNodes.includes(segment.existingDevice)) {
+                        currentRing.existingDeviceNodes.push(segment.existingDevice);
+                    }
+                }
+            }
+            
+            // 添加最后一个环
+            if (currentRing && currentRing.segments.length > 0) {
+                ringData.push(currentRing);
+            }
+            
+            // 更新表格预览
+            updateTablePreview();
+            
+            // 生成环选择器
+            createRingSelector();
+            
+            // 生成拓扑预览
+            generateTopologyPreview();
+        }
+        
+        // 创建环选择器
+        function createRingSelector() {
+            ringSelector.innerHTML = '';
+            ringSelector.style.display = 'flex';
+            
+            ringData.forEach((ring, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'ring-btn';
+                if (index === currentRingIndex) {
+                    btn.classList.add('active');
+                }
+                btn.textContent = ring.name || `组环方案 ${index + 1}`;
+                btn.onclick = () => {
+                    currentRingIndex = index;
+                    generateTopologyPreview();
+                    // 更新按钮状态
+                    document.querySelectorAll('.ring-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                };
+                ringSelector.appendChild(btn);
+            });
+        }
+        
+        // 更新表格预览
+        function updateTablePreview() {
+            const tbody = dataTable.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            if (ringData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="8" style="text-align: center; color: #aaa;">未找到有效数据</td>`;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            ringData.forEach(ring => {
+                ring.segments.forEach(segment => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${segment.id || ''}</td>
+                        <td>${segment.ringName || ring.name || ''}</td>
+                        <td>${segment.start || ''}</td>
+                        <td>${segment.end || ''}</td>
+                        <td>${segment.cableType || ''}</td>
+                        <td>${segment.distance || ''}</td>
+                        <td>${segment.newDevice || ''}</td>
+                        <td>${segment.existingDevice || ''}</td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+                
+                // 添加分隔行
+                const separator = document.createElement('tr');
+                separator.innerHTML = `<td colspan="8" style="background: rgba(255,255,255,0.05); height: 3px;"></td>`;
+                tbody.appendChild(separator);
+            });
+        }
+        
+        // 确定节点类型
+        function getNodeType(nodeName, ring) {
+            // 检查是否是机房
+            if (ring.roomNodes.includes(nodeName)) {
+                return '机房';
+            }
+            
+            // 检查是否是新增设备
+            if (ring.newDeviceNodes.includes(nodeName)) {
+                return '新增设备';
+            }
+            
+            // 检查是否是原有设备
+            if (ring.existingDeviceNodes.includes(nodeName)) {
+                return '原有设备';
+            }
+            
+            // 检查是否是跳纤点
+            let isFiberPoint = true;
+            
+            // 检查是否在特殊列中出现
+            ring.segments.forEach(segment => {
+                if (segment.room1 === nodeName || segment.room2 === nodeName || 
+                    segment.newDevice === nodeName || segment.existingDevice === nodeName) {
+                    isFiberPoint = false;
+                }
+            });
+            
+            if (isFiberPoint) {
+                return '跳纤点';
+            }
+            
+            // 默认原有设备
+            return '原有设备';
+        }
+        
+        // 生成拓扑预览（优化标签位置）
+        function generateTopologyPreview() {
+            if (ringData.length === 0) {
+                topologyPreview.innerHTML = `
+                    <div style="color: #aaa; text-align: center; padding-top: 50px;">
+                        拓扑图将在生成后显示在此处
+                    </div>
+                `;
+                return;
+            }
+            
+            // 使用当前选择的环生成预览
+            const ring = ringData[currentRingIndex];
+            topologyPreview.innerHTML = '';
+            
+            // 创建节点和线路
+            const nodes = {};
+            const lines = [];
+            
+            // 收集所有节点
+            ring.segments.forEach(segment => {
+                if (segment.start) {
+                    nodes[segment.start] = {
+                        id: segment.start,
+                        type: getNodeType(segment.start, ring),
+                        distance: segment.distance
+                    };
+                }
+                
+                if (segment.end) {
+                    nodes[segment.end] = {
+                        id: segment.end,
+                        type: getNodeType(segment.end, ring),
+                        distance: segment.distance
+                    };
+                }
+                
+                // 添加线路
+                if (segment.start && segment.end) {
+                    lines.push({
+                        start: segment.start,
+                        end: segment.end,
+                        type: segment.cableType,
+                        distance: segment.distance
+                    });
+                }
+            });
+            
+            // 使用路由顺序排列节点
+            const routeNodes = ring.routeNodes || Object.keys(nodes);
+            const containerWidth = topologyPreview.offsetWidth;
+            const containerHeight = topologyPreview.offsetHeight;
+            
+            // 计算节点位置（凵形布局 - 开口向下）
+            const nodePositions = {};
+            const uLayout = calculateUShapeLayout(routeNodes, containerWidth, containerHeight);
+            
+            routeNodes.forEach((nodeId, index) => {
+                nodePositions[nodeId] = uLayout.positions[index];
+            });
+            
+            // 绘制线路 - 按照路由顺序
+            for (let i = 0; i < routeNodes.length - 1; i++) {
+                const startNode = routeNodes[i];
+                const endNode = routeNodes[i+1];
+                
+                if (!nodePositions[startNode] || !nodePositions[endNode]) continue;
+                
+                const x1 = nodePositions[startNode].x;
+                const y1 = nodePositions[startNode].y;
+                const x2 = nodePositions[endNode].x;
+                const y2 = nodePositions[endNode].y;
+                
+                // 计算线路长度和角度
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                // 创建线路元素
+                const lineElement = document.createElement('div');
+                lineElement.className = 'topology-line';
+                lineElement.style.width = `${length}px`;
+                lineElement.style.left = `${x1}px`;
+                lineElement.style.top = `${y1}px`;
+                lineElement.style.transform = `rotate(${angle}deg)`;
+                
+                // 设置线路颜色和宽度
+                const lineType = getLineType(ring, startNode, endNode);
+                if (lineType === '新建') {
+                    lineElement.style.backgroundColor = '#F44336'; // 新建光缆 - 红色
+                    lineElement.style.height = '5px';
+                    lineElement.style.zIndex = '6'; // 新建线路在上层
+                } else {
+                    lineElement.style.backgroundColor = '#4CAF50'; // 原有光缆 - 绿色
+                    lineElement.style.height = '3px';
+                }
+                
+                topologyPreview.appendChild(lineElement);
+                
+                // 添加距离标签（确保距离存在）
+                const distance = getLineDistance(ring, startNode, endNode);
+                if (distance) {
+                    const distanceLabel = document.createElement('div');
+                    distanceLabel.className = 'topology-distance';
+                    distanceLabel.textContent = distance;
+                    
+                    // 距离标签放在线段中心点
+                    distanceLabel.style.left = `${(x1 + x2) / 2}px`;
+                    distanceLabel.style.top = `${(y1 + y2) / 2}px`;
+                    
+                    topologyPreview.appendChild(distanceLabel);
+                }
+            }
+            
+            // 绘制节点
+            routeNodes.forEach((nodeId, index) => {
+                if (!nodePositions[nodeId]) return;
+                
+                const x = nodePositions[nodeId].x;
+                const y = nodePositions[nodeId].y;
+                const node = nodes[nodeId] || {
+                    id: nodeId,
+                    type: getNodeType(nodeId, ring)
+                };
+                
+                // 创建节点图标
+                const nodeElement = document.createElement('div');
+                nodeElement.className = 'topology-node';
+                nodeElement.style.left = `${x - 30}px`; // 调整为中心点
+                nodeElement.style.top = `${y - 30}px`;  // 调整为中心点
+                
+                // 设置节点背景图片
+                const iconUrl = iconUrls[node.type] || iconUrls['原有设备'];
+                nodeElement.style.backgroundImage = `url(${iconUrl})`;
+                
+                topologyPreview.appendChild(nodeElement);
+                
+                // 创建节点标签
+                const label = document.createElement('div');
+                label.className = 'node-label';
+                label.textContent = nodeId;
+                
+                // 根据节点位置设置标签位置
+                if (index < routeNodes.length / 3) {
+                    // 左侧节点 - 标签在左侧
+                    label.style.left = `${x - 30 - 90}px`;
+                    label.style.top = `${y - 15}px`;
+                } else if (index > routeNodes.length - Math.ceil(routeNodes.length / 3)) {
+                    // 右侧节点 - 标签在右侧
+                    label.style.left = `${x + 30 + 10}px`;
+                    label.style.top = `${y - 15}px`;
+                } else {
+                    // 底部节点 - 标签在下方
+                    label.style.left = `${x - 60}px`;
+                    label.style.top = `${y + 30 + 15}px`;
+                }
+                
+                // 智能调整标签位置避免重叠
+                adjustLabelPosition(label, nodeElement);
+                
+                topologyPreview.appendChild(label);
+            });
+            
+            // 重置视图
+            scale = 1;
+            offsetX = 0;
+            offsetY = 0;
+            setViewTransform();
+        }
+        
+        // 智能调整标签位置避免重叠
+        function adjustLabelPosition(label, nodeElement) {
+            // 获取节点位置
+            const nodeRect = nodeElement.getBoundingClientRect();
+            const containerRect = topologyPreview.getBoundingClientRect();
+            
+            // 计算节点中心位置
+            const nodeCenterX = nodeRect.left + nodeRect.width/2 - containerRect.left;
+            const nodeCenterY = nodeRect.top + nodeRect.height/2 - containerRect.top;
+            
+            // 获取标签位置
+            const labelLeft = parseInt(label.style.left);
+            const labelTop = parseInt(label.style.top);
+            
+            // 计算标签中心位置
+            const labelCenterX = labelLeft + label.offsetWidth/2;
+            const labelCenterY = labelTop + label.offsetHeight/2;
+            
+            // 计算标签与节点的距离
+            const dx = labelCenterX - nodeCenterX;
+            const dy = labelCenterY - nodeCenterY;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            // 最小安全距离（节点半径 + 标签一半高度）
+            const minDistance = 60;
+            
+            if (distance < minDistance) {
+                // 计算需要移动的方向和距离
+                const moveDistance = minDistance - distance + 10;
+                const moveX = (dx / distance) * moveDistance;
+                const moveY = (dy / distance) * moveDistance;
+                
+                // 应用新位置
+                label.style.left = `${labelLeft + moveX}px`;
+                label.style.top = `${labelTop + moveY}px`;
+            }
+        }
+        
+        // 计算凵形布局位置（开口向下）
+        function calculateUShapeLayout(nodes, containerWidth, containerHeight) {
+            const positions = [];
+            const nodeCount = nodes.length;
+            
+            // 布局参数
+            const marginX = 100;
+            const marginY = 80;
+            const availableWidth = containerWidth - 2 * marginX;
+            const availableHeight = containerHeight - 2 * marginY;
+            
+            // 计算每边的节点数
+            const leftCount = Math.ceil(nodeCount / 3);
+            const bottomCount = nodeCount - 2 * leftCount;
+            const rightCount = leftCount;
+            
+            // 计算间距
+            const leftSpacing = availableHeight / (leftCount - 1) * 0.85;
+            const bottomSpacing = availableWidth / (bottomCount + 1) * 0.85;
+            const rightSpacing = availableHeight / (rightCount - 1) * 0.85;
+            
+            // 凵形布局（开口向下）：
+            // 左侧：从上到下
+            // 底部：从左到右
+            // 右侧：从下到上
+            
+            for (let i = 0; i < nodeCount; i++) {
+                let x, y;
+                
+                // 左侧节点 (从上到下)
+                if (i < leftCount) {
+                    x = marginX;
+                    y = marginY + i * leftSpacing;
+                }
+                // 底部节点 (从左到右)
+                else if (i < leftCount + bottomCount) {
+                    const bottomIndex = i - leftCount;
+                    x = marginX + (bottomIndex + 1) * bottomSpacing;
+                    y = marginY + availableHeight;
+                }
+                // 右侧节点 (从下到上) - 修正：从底部开始向上排列
+                else {
+                    const rightIndex = i - (leftCount + bottomCount);
+                    x = marginX + availableWidth;
+                    y = marginY + availableHeight - rightIndex * rightSpacing;
+                }
+                
+                positions.push({x, y});
+            }
+            
+            return {
+                positions: positions,
+                width: availableWidth + 2 * marginX,
+                height: availableHeight + 2 * marginY
+            };
+        }
+        
+        // 获取线路类型
+        function getLineType(ring, start, end) {
+            for (const segment of ring.segments) {
+                if ((segment.start === start && segment.end === end) || 
+                    (segment.start === end && segment.end === start)) {
+                    return segment.cableType;
+                }
+            }
+            return '利旧'; // 默认
+        }
+        
+        // 获取线路距离
+        function getLineDistance(ring, start, end) {
+            for (const segment of ring.segments) {
+                if ((segment.start === start && segment.end === end) || 
+                    (segment.start === end && segment.end === start)) {
+                    return segment.distance;
+                }
+            }
+            return '';
+        }
+        
+        // 生成PPT
+        generateBtn.addEventListener('click', generatePPT);
+        
+        async function generatePPT() {
+            if (ringData.length === 0) {
+                showStatus('没有可用的数据生成PPT', 'error');
+                return;
+            }
+            
+            // 确保所有图标都已加载
+            const iconsLoaded = Object.values(iconBase64Data).every(base64 => base64 !== null);
+            if (!iconsLoaded) {
+                showStatus("图标资源尚未完全加载，请稍后再试", "error");
+                return;
+            }
+            
+            try {
+                showStatus("正在生成PPT，请稍候...", "loading");
+                
+                // 创建PPT实例
+                const pptx = new PptxGenJS();
+                
+                // 设置PPT属性
+                pptx.author = "传输设备组环拓扑自动生成工具";
+                pptx.company = "微信公众号：软件帮Pro";
+                pptx.revision = "1.0";
+                pptx.title = "传输设备组环拓扑方案";
+                pptx.layout = "LAYOUT_16x9";
+                
+                // 为每个环创建一个幻灯片
+                for (let i = 0; i < ringData.length; i++) {
+                    const ring = ringData[i];
+                    const slide = pptx.addSlide();
+                    
+                    // 添加标题（左上角）
+                    slide.addText(ring.name, {
+                        x: 0.5,
+                        y: 0.3,
+                        w: "90%",
+                        h: 0.5,
+                        fontSize: 16,
+                        bold: true,
+                        color: "000000",
+                        fontFace: "宋体",
+                        align: "left"
+                    });
+                    
+                    // 创建节点和线路
+                    const nodes = {};
+                    
+                    // 收集所有节点
+                    ring.segments.forEach(segment => {
+                        if (segment.start) {
+                            nodes[segment.start] = {
+                                id: segment.start,
+                                type: getNodeType(segment.start, ring),
+                                distance: segment.distance
+                            };
+                        }
+                        
+                        if (segment.end) {
+                            nodes[segment.end] = {
+                                id: segment.end,
+                                type: getNodeType(segment.end, ring),
+                                distance: segment.distance
+                            };
+                        }
+                    });
+                    
+                    // 使用路由顺序排列节点
+                    const routeNodes = ring.routeNodes || Object.keys(nodes);
+                    
+                    // 计算节点位置（PPT中的凵形布局 - 开口向下）
+                    const layout = calculatePPTUShapeLayout(routeNodes);
+                    let positions = layout.positions;
+                    const { leftCount, bottomCount, rightCount } = layout;
+                    
+                    // 计算布局边界
+                    let minX = Number.MAX_VALUE, maxX = Number.MIN_VALUE;
+                    let minY = Number.MAX_VALUE, maxY = Number.MIN_VALUE;
+                    
+                    Object.values(positions).forEach(pos => {
+                        minX = Math.min(minX, pos.x);
+                        maxX = Math.max(maxX, pos.x);
+                        minY = Math.min(minY, pos.y);
+                        maxY = Math.max(maxY, pos.y);
+                    });
+                    
+                    // 目标区域位置 (标题下方两行位置)
+                    const targetStartX = 1.0;
+                    const targetStartY = 1.3; // 标题下方两行
+                    
+                    // 计算居中偏移量
+                    const topologyWidth = maxX - minX;
+                    const topologyHeight = maxY - minY;
+                    const slideWidth = 10; // PPT页面宽度10英寸
+                    const centerOffsetX = (slideWidth - topologyWidth * 0.6) / 2;
+                    
+                    // 准备组合对象
+                    const slideObjects = [];
+                    
+                    // 绘制线路 - 按照路由顺序
+                    for (let j = 0; j < routeNodes.length - 1; j++) {
+                        const startNode = routeNodes[j];
+                        const endNode = routeNodes[j+1];
+                        
+                        if (!positions[startNode] || !positions[endNode]) continue;
+                        
+                        // 应用缩放和平移（整体缩小40%）
+                        let x1 = ((positions[startNode].x - minX) * 0.6) + centerOffsetX;
+                        let y1 = ((positions[startNode].y - minY) * 0.6) + targetStartY;
+                        let x2 = ((positions[endNode].x - minX) * 0.6) + centerOffsetX;
+                        let y2 = ((positions[endNode].y - minY) * 0.6) + targetStartY;
+                        
+                        // 添加线路
+                        const lineType = getLineType(ring, startNode, endNode);
+                        const lineWidth = 0.03; // 0.03英寸 ≈ 0.76毫米
+                        const lineColor = lineType === '新建' ? "F44336" : "4CAF50";
+                        
+                        // 判断线路方向（水平或垂直）
+                        if (Math.abs(y1 - y2) < 0.001) {
+                            // 水平线
+                            slide.addShape(pptx.ShapeType.line, {
+                                x: x1,
+                                y: y1,
+                                w: x2 - x1,
+                                h: 0,
+                                line: {
+                                    color: lineColor,
+                                    width: lineWidth,
+                                    dashType: "solid"
+                                }
+                            });
+                        } else if (Math.abs(x1 - x2) < 0.001) {
+                            // 垂直线
+                            slide.addShape(pptx.ShapeType.line, {
+                                x: x1,
+                                y: y1,
+                                w: 0,
+                                h: y2 - y1,
+                                line: {
+                                    color: lineColor,
+                                    width: lineWidth,
+                                    dashType: "solid"
+                                }
+                            });
+                        } else {
+                            // 斜线（应避免）
+                            slide.addShape(pptx.ShapeType.line, {
+                                x: x1,
+                                y: y1,
+                                w: x2 - x1,
+                                h: y2 - y1,
+                                line: {
+                                    color: lineColor,
+                                    width: lineWidth,
+                                    dashType: "solid"
+                                }
+                            });
+                        }
+                        
+                        // 添加距离标签
+                        const midX = (x1 + x2) / 2;
+                        const midY = (y1 + y2) / 2;
+                        const distance = getLineDistance(ring, startNode, endNode) || '';
+                        
+                        if (distance) {
+                            slide.addText(distance, {
+                                x: midX - 0.5,
+                                y: midY - 0.15,
+                                w: 1.0,
+                                h: 0.3,
+                                fontSize: 10,
+                                color: "000000",
+                                fill: { color: "FFFFFF", transparency: 100 }, // 背景全透明
+                                align: "center",
+                                valign: "middle"
+                            });
+                        }
+                    }
+                    
+                    // 绘制节点
+                    for (let j = 0; j < routeNodes.length; j++) {
+                        const nodeId = routeNodes[j];
+                        if (!positions[nodeId]) continue;
+                        
+                        // 应用缩放和平移（整体缩小40%）
+                        const x = ((positions[nodeId].x - minX) * 0.6) + centerOffsetX;
+                        const y = ((positions[nodeId].y - minY) * 0.6) + targetStartY;
+                        
+                        const node = nodes[nodeId] || {
+                            id: nodeId,
+                            type: getNodeType(nodeId, ring)
+                        };
+                        
+                        // 获取节点对应的Base64数据
+                        const base64Data = iconBase64Data[node.type] || iconBase64Data['原有设备'];
+                        
+                        // 添加节点图片（图标缩小50%）
+                        slide.addImage({
+                            data: base64Data,
+                            x: x - 0.15,  // 图标大小0.3英寸
+                            y: y - 0.15,
+                            w: 0.3,
+                            h: 0.3
+                        });
+                        
+                        // 添加节点标签（文字颜色为黑色）
+                        let labelX, labelY, align, valign, w, h;
+                        w = 1.2;
+                        h = 0.4;
+                        align = "center";
+                        valign = "middle";
+                        
+                        // 根据节点位置调整标签位置
+                        if (j < leftCount) {
+                            // 左侧节点 - 标签在左侧
+                            labelX = x - 0.15 - w;
+                            labelY = y - 0.15;
+                            align = "right";
+                        } else if (j < leftCount + bottomCount) {
+                            // 底部节点 - 标签在下方
+                            labelX = x - w/2;
+                            labelY = y + 0.15;
+                            valign = "top";
+                        } else {
+                            // 右侧节点 - 标签在右侧
+                            labelX = x + 0.15;
+                            labelY = y - 0.15;
+                            align = "left";
+                        }
+                        
+                        slide.addText(nodeId, {
+                            x: labelX,
+                            y: labelY,
+                            w: w,
+                            h: h,
+                            fontSize: 10,
+                            bold: true,
+                            color: "000000",
+                            align: align,
+                            valign: valign,
+                            autoFit: true,
+                            wordWrap: true
+                        });
+                    }
+                    
+                    // 添加图例说明（左下角）
+                    const legendItems = [
+                        { type: "机房", image: iconBase64Data['机房'] },
+                        { type: "原有设备", image: iconBase64Data['原有设备'] },
+                        { type: "新增设备", image: iconBase64Data['新增设备'] },
+                        { type: "跳纤点", image: iconBase64Data['跳纤点'] },
+                        { type: "原有光缆", color: "4CAF50", isLine: true },
+                        { type: "新建光缆", color: "F44336", isLine: true }
+                    ];
+                    
+                    // 图例位置（左下角）
+                    const legendStartX = 0.5;
+                    const legendY = 5.0; // 调整到页面内部
+                    const legendItemWidth = 1.2;
+                    const legendSpacing = 0.2;
+                    
+                    // 添加图例项
+                    for (let k = 0; k < legendItems.length; k++) {
+                        const item = legendItems[k];
+                        const xPos = legendStartX + k * (legendItemWidth + legendSpacing);
+                        
+                        if (item.image) {
+                            // 节点图例 - 使用图片
+                            slide.addImage({
+                                data: item.image,
+                                x: xPos + legendItemWidth/2 - 0.15,
+                                y: legendY,
+                                w: 0.3,
+                                h: 0.3,
+                                align: 'center'
+                            });
+                            
+                            // 图例文字
+                            slide.addText(item.type, {
+                                x: xPos,
+                                y: legendY + 0.35,
+                                w: legendItemWidth,
+                                h: 0.2,
+                                fontSize: 10,
+                                color: "000000",
+                                align: "center"
+                            });
+                        } else if (item.isLine) {
+                            // 线缆图例
+                            slide.addShape(pptx.ShapeType.line, {
+                                x: xPos + 0.2,
+                                y: legendY + 0.15,
+                                w: legendItemWidth - 0.4,
+                                h: 0,
+                                line: {
+                                    color: item.color,
+                                    width: 0.03
+                                }
+                            });
+                            
+                            // 图例文字
+                            slide.addText(item.type, {
+                                x: xPos,
+                                y: legendY + 0.35,
+                                w: legendItemWidth,
+                                h: 0.2,
+                                fontSize: 10,
+                                color: "000000",
+                                align: "center"
+                            });
+                        }
+                    }
+                }
+                
+                // 保存PPT
+                pptx.writeFile({fileName: `传输设备组环拓扑方案${new Date().toISOString().slice(0, 10)}.pptx`})
+                    .then(() => {
+                        showStatus("PPT文件生成成功并已开始下载！", "success");
+                    })
+                    .catch(error => {
+                        console.error('Error generating PPT:', error);
+                        showStatus("生成PPT时出错: " + error.message, "error");
+                    });
+                
+            } catch (error) {
+                console.error('Error in PPT generation:', error);
+                showStatus("生成PPT时出错: " + error.message, "error");
+            }
+        }
+        
+        // 计算PPT中的凵形布局位置（开口向下）
+        function calculatePPTUShapeLayout(nodes) {
+            const positions = {};
+            const nodeCount = nodes.length;
+            
+            // 计算每边的节点数
+            const leftCount = Math.ceil(nodeCount / 3);
+            const bottomCount = nodeCount - 2 * leftCount;
+            const rightCount = leftCount;
+            
+            // 计算节点间距（2-5厘米，转换为英寸）
+            const minSpacing = 2 * 0.3937; // 2厘米转英寸
+            const maxSpacing = 5 * 0.3937; // 5厘米转英寸
+            
+            // 动态计算垂直间距
+            let verticalSpacing = maxSpacing;
+            if (leftCount > 1) {
+                verticalSpacing = Math.max(minSpacing, Math.min(maxSpacing, maxSpacing - (leftCount - 1) * 0.2));
+            }
+            
+            // 动态计算水平间距
+            let horizontalSpacing = maxSpacing;
+            if (bottomCount > 0) {
+                horizontalSpacing = Math.max(minSpacing, Math.min(maxSpacing, maxSpacing - (bottomCount - 1) * 0.2));
+            }
+            
+            // 设置基点 (0,0)
+            const baseX = 0;
+            const baseY = 0;
+            
+            // 左侧节点（从上到下）
+            for (let i = 0; i < leftCount; i++) {
+                const nodeId = nodes[i];
+                positions[nodeId] = {
+                    x: baseX,
+                    y: baseY + i * verticalSpacing
+                };
+            }
+            
+            // 底部节点（从左到右）
+            for (let i = 0; i < bottomCount; i++) {
+                const nodeId = nodes[leftCount + i];
+                positions[nodeId] = {
+                    x: baseX + (i + 1) * horizontalSpacing,
+                    y: baseY + (leftCount - 1) * verticalSpacing
+                };
+            }
+            
+            // 右侧节点（从下到上） - 修正：从底部开始向上排列
+            for (let i = 0; i < rightCount; i++) {
+                const nodeId = nodes[leftCount + bottomCount + i];
+                positions[nodeId] = {
+                    x: baseX + (bottomCount + 1) * horizontalSpacing,
+                    y: baseY + (leftCount - 1) * verticalSpacing - i * verticalSpacing
+                };
+            }
+            
+            return {
+                positions: positions,
+                leftCount: leftCount,
+                bottomCount: bottomCount,
+                rightCount: rightCount
+            };
+        }
+        
+        // 示例文件下载
+        sampleBtn.addEventListener('click', () => {
+            // 创建示例数据
+            const sampleData = [
+                ["序号", "接入环", "县区", "起点", "终点", "光缆属性", "光缆芯数", "光缆距离", "综合机房1", "综合机房2", "环路由", "新增设备站点", "原有设备站点"],
+                [1, "XX区D-RAN10GE接入环01", "XX区", "机房1", "基站1", "利旧", 48, "0.5km", "机房1", "机房2", "机房1-基站1-基站2-基站3-基站4-基站5-机房2", "", "基站1"],
+                [2, "", "XX区", "基站1", "基站2", "新建", 24, "1.2km", "", "", "", "基站2", "基站3"],
+                [3, "", "XX区", "基站2", "基站3", "新建", 24, "2.2km", "", "", "", "", ""],
+                [4, "", "XX区", "基站3", "基站4", "新建", 24, "5.3km", "", "", "", "基站5", "基站4"],
+                [5, "", "XX区", "基站4", "机房2", "利旧", 96, "1.1km", "", "", "", "", ""],
+                [],
+                [6, "XX县D-RAN10GE接入环02", "XX县", "机房A", "基站A1", "利旧", 48, "0.7km", "机房A", "机房B", "机房A-基站A1-基站A2-基站A3-机房B", "", "基站A1"],
+                [7, "", "XX县", "基站A1", "基站A2", "新建", 24, "1.5km", "", "", "", "基站A2", "基站A3"],
+                [8, "", "XX县", "基站A2", "基站A3", "新建", 24, "2.8km", "", "", "", "", ""],
+                [9, "", "XX县", "基站A3", "机房B", "利旧", 96, "0.9km", "", "", "", "", ""]
+            ];
+            
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+            
+            // 生成文件并下载
+            XLSX.writeFile(wb, "传输设备组环跳纤表示例.xlsx");
+            
+            showStatus("示例文件已下载！", "success");
+        });
+        
+        // 显示状态消息
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = "status " + type;
+            statusMessage.style.display = "block";
+            statusMessage.style.opacity = "1";
+            
+            if (type !== "loading") {
+                // 3秒后自动隐藏
+                setTimeout(() => {
+                    statusMessage.style.opacity = "0";
+                    setTimeout(() => {
+                        statusMessage.style.display = "none";
+                    }, 500);
+                }, 3000);
+            }
+        }
+    </script>
+</body>
 </html>
